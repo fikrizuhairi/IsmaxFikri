@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Jemputan — Fit-to-page & Mobile Friendly</title>
+  <title>Jemputan — Background original size (no stretch)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,8 +17,6 @@
       --frame-top-h: 0px;        /* set by JS from overlay height */
       --frame-bottom-h: 0px;     /* set by JS from overlay height */
       --bg-img: url("https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/fr0042/6jgvkT17552257093998.jpg");
-      --overlay-top-src: "https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/fr0042/1gAdBv175522894697110.png";
-      --overlay-bottom-src: "https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/fr0042/T7EZA1175522895996211.png";
     }
 
     /* reset */
@@ -28,18 +26,20 @@
       font-family:'Poppins',sans-serif;
       color:#111;
       -webkit-font-smoothing:antialiased;
+
+      /* IMPORTANT: show background at its original size (no stretching) */
       background-image: var(--bg-img);
-      background-size: cover;
-      background-position: center top;
+      background-size: auto;            /* don't scale the image */
+      background-position: center top;  /* position as you prefer */
       background-repeat: no-repeat;
-      background-attachment: fixed;
-      overflow-x:hidden; /* prevent horizontal scroll from overlays */
+      background-attachment: scroll;    /* avoid fixed parallax on mobile */
+      
+      overflow-x:hidden;
       padding-bottom: calc(140px + env(safe-area-inset-bottom));
+      background-color: #f6f3ef; /* fallback if image smaller than viewport */
     }
 
-    /* OVERLAYS: responsive & fit-to-page
-       width uses min(app max width, viewport width) so overlays never overflow
-    */
+    /* OVERLAYS: responsive & fit-to-page */
     .overlay-img {
       position: fixed;
       left: 50%;
@@ -47,11 +47,10 @@
       pointer-events: none;
       z-index: 9999;
       display: block;
-      width: min(var(--app-maxw), 100vw); /* IMPORTANT: fits page & mobile */
+      width: min(var(--app-maxw), 100vw); /* responsive: won't overflow viewport */
       height: auto;
-      max-width: 100%;
       object-fit: contain;
-      image-rendering: auto;
+      max-width: 100%;
     }
     .overlay-top { top: 0; }
     .overlay-bottom { bottom: 0; }
@@ -113,25 +112,23 @@
     }
     .btn-inline{ display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:100%;gap:8px;font-size:14px }
 
-    /* small screens: slightly reduce overlay height if viewport very short to avoid huge padding */
     @media (max-height:600px){
       .overlay-img { width: min(calc(var(--app-maxw) * 0.9), 100vw); }
     }
 
-    /* ensure no horizontal overflow from overlays */
     @media (max-width:420px){
       html,body { overflow-x:hidden; }
       .overlay-img { width: 100vw; left:50%; transform:translateX(-50%); }
     }
 
-    /* small utility */
+    /* utility */
     .bubbles{ max-height:220px; overflow-y:auto; padding-right:6px; margin-top:8px }
     .bubble{ background:#fff4e9; padding:10px;border-radius:14px;margin-bottom:8px; box-shadow:0 6px 12px rgba(0,0,0,0.05) }
   </style>
 </head>
 <body>
 
-  <!-- Overlays as <img> but RESPONSIVE (width = min(appMax, viewportWidth)) -->
+  <!-- Overlays (responsive) -->
   <img id="overlayTop" class="overlay-img overlay-top" src="https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/fr0042/1gAdBv175522894697110.png" alt="" />
   <img id="overlayBottom" class="overlay-img overlay-bottom" src="https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/fr0042/T7EZA1175522895996211.png" alt="" />
 
@@ -246,32 +243,29 @@
   // set CSS var helper
   function setCSSVar(name, value){ document.documentElement.style.setProperty(name, value); }
 
-  // overlays
+  // overlays DOM
   const topImg = document.getElementById('overlayTop');
   const bottomImg = document.getElementById('overlayBottom');
 
+  // update overlay heights after rendered (responsive)
   function updateOverlayHeights(){
-    // read current rendered heights (after responsive scaling)
     try{
       const topH = topImg && topImg.getBoundingClientRect ? Math.round(topImg.getBoundingClientRect().height) : 0;
       const bottomH = bottomImg && bottomImg.getBoundingClientRect ? Math.round(bottomImg.getBoundingClientRect().height) : 0;
       setCSSVar('--frame-top-h', (topH || 0) + 'px');
       setCSSVar('--frame-bottom-h', (bottomH || 0) + 'px');
     }catch(e){
-      // fallback sizes
       setCSSVar('--frame-top-h', '220px');
       setCSSVar('--frame-bottom-h', '180px');
     }
   }
 
-  // update after images loaded & on resize/orientation change
   function attachUpdate(img){
     if(!img) return;
     if(img.complete){
       updateOverlayHeights();
     } else {
       img.addEventListener('load', updateOverlayHeights, {once:true});
-      // fallback
       setTimeout(updateOverlayHeights, 600);
     }
   }
@@ -280,7 +274,7 @@
   window.addEventListener('resize', updateOverlayHeights);
   window.addEventListener('orientationchange', updateOverlayHeights);
 
-  /* Popup + form logic (same as previous) */
+  // Popup & form logic (same as earlier)
   function escapeHtml(s){ if (typeof s !== 'string') return s||''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
   function showStatus(el, msg, ok){ if(!el) return; el.style.display='block'; el.textContent = msg; el.style.color = ok ? '#0a7a00' : '#b21b1b'; }
 
@@ -321,7 +315,7 @@
     container.addEventListener('mouseleave', ()=>autoT = setInterval(()=>{ idx = (idx+1)%total; slider.style.transform = 'translateX(-'+(idx*100)+'%)'; }, 3500));
   }catch(e){ console.warn(e); }})();
 
-  // countdown (example)
+  // countdown example
   function pad(n){ return String(n).padStart(2,'0'); }
   const eventDate = new Date('2026-01-13T11:00:00+08:00');
   function updateCountdown(){
