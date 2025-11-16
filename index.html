@@ -139,23 +139,22 @@
       display: block;
     }
 
-  .overlay-wrap {
-  position: fixed;
-  inset: 0;
-  z-index: 9;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-.overlay-img {
-  width: 100%;
-  height: auto;
-  max-height: 100vh;
-  object-fit: contain;
-}
-
+    /* PNG OVERLAY — di atas background tetapi kita akan mask lubang untuk .content */
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9; /* DIATUR: di bawah .app (10) supaya .content sentiasa di atas overlay */
+      pointer-events: none; /* jangan ganggu klik/scroll */
+      background-image: url("https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/cv0005/6IHY0i1731112033501CV0005-RSVP.png");
+      background-repeat: no-repeat;
+      background-position: center top;
+      background-size: 450px 109vh; /* lebar 450px, tinggi ikut aspect ratio */
+      opacity: 1;
+      mix-blend-mode: normal;
+      will-change: transform, opacity;
+      transition: opacity var(--overlay-fade-ms) ease;
+      /* fallback visual in case mask not supported */
+    }
 
     /* ---------- MAIN APP (scrolls above fixed bg & overlay) ---------- */
     .app{ max-width:450px; margin:auto; position:relative; min-height:100vh; scroll-snap-type:y mandatory; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:140px; z-index:10; } /* z-index:10 supaya app berada di atas bg-video; overlay z:9 akan nampak di bawah content */
@@ -483,6 +482,11 @@ h2 {
       .bottom-bar { padding:6px 10px; }
     }
 
+    /* Small tweaks for Add-to-Calendar popup */
+    #addCalPopup a { font-weight:600; display:inline-flex; align-items:center; justify-content:center; }
+    #addCalPopup .fa-google { margin-right:6px; }
+    #addCalPopup .fa-calendar { margin-right:6px; }
+
   </style>
 </head>
 <body>
@@ -491,11 +495,8 @@ h2 {
     <img src="https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/fr0042/6jgvkT17552257093998.jpg" alt="Wedding Background" />
   </div>
 
- <!-- NEW OPTION 3 OVERLAY USING IMG -->
-<div class="overlay-wrap" aria-hidden="true">
-  <img class="overlay-img" 
-       src="https://invitation-v2.mymawaddah.com/storage/wedapp-invitation/design/cv0005/6IHY0i1731112033501CV0005-RSVP.png" />
-</div>
+  <!-- PNG overlay (fixed). Mask telah dibuang — overlay kini berada di bawah .app berdasarkan z-index -->
+  <div class="bg-overlay" aria-hidden="true"></div>
 
   <!-- NEW: Mawaddah-style opening overlay -->
   <div id="openingOverlay" role="dialog" aria-label="Skrin Muka" aria-modal="true">
@@ -584,7 +585,7 @@ h2 {
           <div class="slides">
            <!-- <div class="slide-item"><img src="https://i.postimg.cc/C5BpCwGw/Whats-App-Image-2025-11-08-at-7-40-37-PM.jpg" alt="Foto 1" loading="lazy" decoding="async"></div> -->
             <div class="slide-item"><img src="https://i.postimg.cc/RVtzNVCT/Whats-App-Image-2025-11-08-at-7-42-44-PM.jpg" alt="Foto 2" loading="lazy" decoding="async"></div>
-            <div class="slide-item"><img src="https://i.postimg.cc/d11QFp8X/Whats-App-Image-2025-11-15-at-00-08-23.jpg" alt="Foto 3" loading="lazy"></div>
+            <div class="slide-item"><img src="https://i.postimg.cc/d11QFp8X/Whats-App-Image-2025-11-15-at-00-08-23.jpg" alt="Foto 3" loading="lazy" decoding="async"></div>
           </div>
           
           <button class="slider-btn next" aria-label="Seterusnya">›</button>
@@ -667,6 +668,11 @@ h2 {
     </div>
 
     <div class="icon-btn" id="bottomRsvpBtn"><i class="fa-regular fa-envelope"></i><span>RSVP</span></div>
+
+    <!-- Add-to-calendar button (letakkan di sebelah RSVP in bottom-bar) -->
+    <div class="icon-btn" id="addCalBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="addCalPopup">
+      <i class="fa-regular fa-calendar"></i><span>Tambah</span>
+    </div>
   </div>
 
   <!-- popup small for RSVP choices -->
@@ -675,6 +681,24 @@ h2 {
     <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih tindakan untuk RSVP atau hantarkan ucapan.</p>
     <a id="openExternalRsvp" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-clipboard-list"></i><span>Isi RSVP</span></a>
     <a id="openUcapan" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-pencil"></i><span>Hantar Ucapan</span></a>
+  </div>
+
+  <!-- Add to Calendar popup -->
+  <div id="addCalPopup" class="map-popup compact" style="display:none;" aria-hidden="true" role="dialog" aria-label="Tambah ke Calendar">
+    <h4 style="margin:0 0 6px;font-family:'Playfair Display',serif;color:#1f1f1f">Tambah ke Calendar</h4>
+    <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih calendar untuk tambah acara:</p>
+
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;">
+      <a id="addGoogleCal" href="#" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;background:#4285f4;color:#fff;text-decoration:none;padding:10px;border-radius:10px;min-width:130px;gap:8px">
+        <i class="fa-brands fa-google"></i><span>Google Calendar</span>
+      </a>
+
+      <a id="addAppleCal" href="#" style="display:flex;align-items:center;justify-content:center;background:#222;color:#fff;text-decoration:none;padding:10px;border-radius:10px;min-width:130px;gap:8px">
+        <i class="fa-regular fa-calendar"></i><span>Apple / .ics</span>
+      </a>
+    </div>
+
+    <button id="closeAddCalPopup" aria-label="Tutup" style="position:absolute;top:8px;right:12px;background:transparent;border:none;font-size:20px;color:#333;cursor:pointer">&times;</button>
   </div>
 
   <!-- popup iframe RSVP (uses form POST via hidden iframe to avoid CORS preflight) -->
@@ -751,7 +775,7 @@ h2 {
   const popupRsvpIframe = document.getElementById('popupRsvpIframe');
   const ucapanForm = document.getElementById('ucapanForm');
 
-  function hideAllPopups(){ [contactCard,mapPopup,popupRsvp,popupRsvpIframe,ucapanForm].forEach(e=>{ if(e) e.style.display='none'; e && e.setAttribute && e.setAttribute('aria-hidden','true'); }); }
+  function hideAllPopups(){ [contactCard,mapPopup,popupRsvp,popupRsvpIframe,ucapanForm, addCalPopup].forEach(e=>{ if(e) e.style.display='none'; e && e.setAttribute && e.setAttribute('aria-hidden','true'); }); }
 
   if(callBtn) callBtn.addEventListener('click', function(e){ e.stopPropagation(); hideAllPopups(); contactCard.style.display = (contactCard.style.display==='block')? 'none':'block'; contactCard.setAttribute('aria-hidden', contactCard.style.display==='none'); });
   if(mapBtn) mapBtn.addEventListener('click', function(e){ e.stopPropagation(); hideAllPopups(); mapPopup.style.display = (mapPopup.style.display==='block')? 'none':'block'; mapPopup.setAttribute('aria-hidden', mapPopup.style.display==='none'); });
@@ -963,7 +987,7 @@ h2 {
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
-  // ---------- NEW: OPENING OVERLAY FLOW (robust) ----------
+  // ---------- OPENING OVERLAY FLOW (robust) ----------
   (function openingFlow(){
     const openingOverlay = document.getElementById('openingOverlay');
     const app = document.getElementById('appRoot');
@@ -1095,6 +1119,177 @@ h2 {
       updateDots();
     }catch(e){ console.warn('slider init', e); }
   })();
+
+})();
+</script>
+
+<!-- ===== Add-to-Calendar script (separate IIFE) ===== -->
+<script>
+(function(){
+  // --- Event details (ubah jika mahu dinamik) ---
+  const EVENT = {
+    title: "Walimatulurus Isma & Fikri",
+    description: "Undangan ke majlis perkahwinan Isma & Fikri — White House Event Space, Dungun. #IsmaUntukFikri",
+    location: "White House Event Space, Dungun",
+    // Start: 03 Jan 2026 11:00 (UTC+08:00), End: 03 Jan 2026 16:00 (UTC+08:00)
+    startLocalIso: "2026-01-03T11:00:00+08:00",
+    endLocalIso:   "2026-01-03T16:00:00+08:00",
+    timezone: "Asia/Kuala_Lumpur",
+    filename: "Walimatulurus-Isma-Fikri.ics"
+  };
+
+  // --- helpers ---
+  function toGoogleCalendarUrl(ev){
+    const text = ev.title;
+    const details = ev.description;
+    const location = ev.location;
+    // convert to UTC YYYYMMDDTHHMMSSZ for Google dates param
+    function toUtcStamp(iso){
+      const d = new Date(iso);
+      const YYYY = d.getUTCFullYear();
+      const MM = String(d.getUTCMonth()+1).padStart(2,'0');
+      const DD = String(d.getUTCDate()).padStart(2,'0');
+      const hh = String(d.getUTCHours()).padStart(2,'0');
+      const mm = String(d.getUTCMinutes()).padStart(2,'0');
+      const ss = String(d.getUTCSeconds()).padStart(2,'0');
+      return `${YYYY}${MM}${DD}T${hh}${mm}${ss}Z`;
+    }
+    const start = toUtcStamp(ev.startLocalIso);
+    const end = toUtcStamp(ev.endLocalIso);
+    const base = "https://www.google.com/calendar/render?action=TEMPLATE";
+    const params = [
+      "text=" + encodeURIComponent(text),
+      "dates=" + encodeURIComponent(start + "/" + end),
+      "details=" + encodeURIComponent(details),
+      "location=" + encodeURIComponent(location),
+      "ctz=" + encodeURIComponent(ev.timezone)
+    ];
+    return base + "&" + params.join("&");
+  }
+
+  // Create ICS content (VEVENT)
+  function makeICS(ev){
+    // ICS needs timestamps in UTC format or local with timezone; we use UTC (Z)
+    function toUtcStampNoSep(iso){
+      const d = new Date(iso);
+      function z(n){ return String(n).padStart(2,'0'); }
+      return d.getUTCFullYear()
+        + z(d.getUTCMonth()+1)
+        + z(d.getUTCDate()) + 'T' + z(d.getUTCHours()) + z(d.getUTCMinutes()) + z(d.getUTCSeconds()) + 'Z';
+    }
+    const dtstamp = toUtcStampNoSep(new Date().toISOString());
+    const uid = 'ev-' + (Math.random().toString(36).substr(2,9)) + '@mymawaddah';
+    const dtstart = toUtcStampNoSep(ev.startLocalIso);
+    const dtend   = toUtcStampNoSep(ev.endLocalIso);
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "CALSCALE:GREGORIAN",
+      "METHOD:REQUEST",
+      "BEGIN:VEVENT",
+      "UID:" + uid,
+      "DTSTAMP:" + dtstamp,
+      "DTSTART:" + dtstart,
+      "DTEND:" + dtend,
+      "SUMMARY:" + escapeICSText(ev.title),
+      "DESCRIPTION:" + escapeICSText(ev.description),
+      "LOCATION:" + escapeICSText(ev.location),
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+    return lines.join("\r\n");
+  }
+
+  function escapeICSText(s){
+    if(!s) return '';
+    return s.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+  }
+
+  function downloadICS(content, filename){
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'event.ics';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 250);
+  }
+
+  // --- UI behavior ---
+  const addCalBtn = document.getElementById('addCalBtn');
+  const addCalPopup = document.getElementById('addCalPopup');
+  const closeAddCalPopup = document.getElementById('closeAddCalPopup');
+  const addGoogleCal = document.getElementById('addGoogleCal');
+  const addAppleCal = document.getElementById('addAppleCal');
+  const popupRsvp = document.getElementById('popupRsvp');
+
+  function showAddPopup(){
+    if(!addCalPopup) return;
+    addCalPopup.style.display = 'block';
+    addCalPopup.setAttribute('aria-hidden','false');
+    addCalBtn.setAttribute('aria-expanded','true');
+  }
+  function hideAddPopup(){
+    if(!addCalPopup) return;
+    addCalPopup.style.display = 'none';
+    addCalPopup.setAttribute('aria-hidden','true');
+    addCalBtn.setAttribute('aria-expanded','false');
+  }
+
+  if(addCalBtn) addCalBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    // toggle
+    if(addCalPopup.style.display === 'block') hideAddPopup();
+    else {
+      // hide other popups if present
+      try { popupRsvp && (popupRsvp.style.display='none'); }catch(e){}
+      showAddPopup();
+    }
+  });
+
+  if(closeAddCalPopup) closeAddCalPopup.addEventListener('click', function(e){ e.stopPropagation(); hideAddPopup(); });
+
+  // close when clicking outside
+  document.addEventListener('click', function(e){
+    if(!addCalPopup) return;
+    if(addCalPopup.style.display !== 'block') return;
+    const inside = addCalPopup.contains(e.target) || (addCalBtn && addCalBtn.contains(e.target));
+    if(!inside) hideAddPopup();
+  });
+
+  // handle Google Calendar
+  if(addGoogleCal){
+    addGoogleCal.addEventListener('click', function(e){
+      // open link with params
+      e.preventDefault();
+      const url = toGoogleCalendarUrl(EVENT);
+      // open in new tab
+      window.open(url, '_blank', 'noopener');
+      // close popup
+      hideAddPopup();
+    });
+    // set href for users without JS
+    addGoogleCal.href = toGoogleCalendarUrl(EVENT);
+  }
+
+  // handle Apple / .ics
+  if(addAppleCal){
+    addAppleCal.addEventListener('click', function(e){
+      e.preventDefault();
+      const ics = makeICS(EVENT);
+      downloadICS(ics, EVENT.filename);
+      hideAddPopup();
+    });
+  }
+
+  // Accessibility: trap focus inside popup when open (basic)
+  addCalPopup && addCalPopup.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') hideAddPopup();
+  });
 
 })();
 </script>
