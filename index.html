@@ -485,7 +485,9 @@ h2 {
     /* Small tweaks for Add-to-Calendar popup */
     #addCalPopup a { font-weight:600; display:inline-flex; align-items:center; justify-content:center; }
     #addCalPopup .fa-google { margin-right:6px; }
-    #addCalPopup .fa-calendar { margin-right:6px; }
+    #addCalPopup .fa-apple { margin-right:8px; font-size:18px; }
+    /* ensure Apple brand icon is vertically aligned */
+    #addCalPopup .fa-apple { line-height:1; }
 
   </style>
 </head>
@@ -669,9 +671,9 @@ h2 {
 
     <div class="icon-btn" id="bottomRsvpBtn"><i class="fa-regular fa-envelope"></i><span>RSVP</span></div>
 
-    <!-- Add-to-calendar button (letakkan di sebelah RSVP in bottom-bar) -->
+    <!-- Add-to-calendar button (label changed to "Calendar") -->
     <div class="icon-btn" id="addCalBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="addCalPopup">
-      <i class="fa-regular fa-calendar"></i><span>Tambah</span>
+      <i class="fa-regular fa-calendar"></i><span>Calendar</span>
     </div>
   </div>
 
@@ -683,7 +685,7 @@ h2 {
     <a id="openUcapan" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-pencil"></i><span>Hantar Ucapan</span></a>
   </div>
 
-  <!-- Add to Calendar popup -->
+  <!-- Add to Calendar popup (Apple button text + icon updated) -->
   <div id="addCalPopup" class="map-popup compact" style="display:none;" aria-hidden="true" role="dialog" aria-label="Tambah ke Calendar">
     <h4 style="margin:0 0 6px;font-family:'Playfair Display',serif;color:#1f1f1f">Tambah ke Calendar</h4>
     <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih calendar untuk tambah acara:</p>
@@ -694,7 +696,7 @@ h2 {
       </a>
 
       <a id="addAppleCal" href="#" style="display:flex;align-items:center;justify-content:center;background:#222;color:#fff;text-decoration:none;padding:10px;border-radius:10px;min-width:130px;gap:8px">
-        <i class="fa-regular fa-calendar"></i><span>Apple / .ics</span>
+        <i class="fa-brands fa-apple"></i><span>Apple Calendar</span>
       </a>
     </div>
 
@@ -774,6 +776,7 @@ h2 {
   const popupRsvp = document.getElementById('popupRsvp');
   const popupRsvpIframe = document.getElementById('popupRsvpIframe');
   const ucapanForm = document.getElementById('ucapanForm');
+  const addCalPopup = document.getElementById('addCalPopup');
 
   function hideAllPopups(){ [contactCard,mapPopup,popupRsvp,popupRsvpIframe,ucapanForm, addCalPopup].forEach(e=>{ if(e) e.style.display='none'; e && e.setAttribute && e.setAttribute('aria-hidden','true'); }); }
 
@@ -782,10 +785,10 @@ h2 {
   if(bottomRsvpBtn) bottomRsvpBtn.addEventListener('click', function(e){ e.stopPropagation(); hideAllPopups(); popupRsvp.style.display = (popupRsvp.style.display==='block')? 'none':'block'; popupRsvp.setAttribute('aria-hidden', popupRsvp.style.display==='none'); });
 
   document.addEventListener('click', function(e){
-    const popupEls = [contactCard,mapPopup,popupRsvp,popupRsvpIframe,ucapanForm];
+    const popupEls = [contactCard,mapPopup,popupRsvp,popupRsvpIframe,ucapanForm, addCalPopup];
     let inside=false;
     popupEls.forEach(p=>{ if(p && p.contains && p.contains(e.target)) inside=true; });
-    const btns=[callBtn,mapBtn,bottomRsvpBtn];
+    const btns=[callBtn,mapBtn,bottomRsvpBtn, document.getElementById('addCalBtn')];
     btns.forEach(b=>{ if(b && (b===e.target || b.contains(e.target))) inside=true; });
     if(!inside) hideAllPopups();
   });
@@ -1276,7 +1279,7 @@ h2 {
     addGoogleCal.href = toGoogleCalendarUrl(EVENT);
   }
 
-  // handle Apple / .ics
+  // handle Apple / .ics (Apple Calendar)
   if(addAppleCal){
     addAppleCal.addEventListener('click', function(e){
       e.preventDefault();
