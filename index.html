@@ -694,7 +694,7 @@ h2 {
   <!-- popup small for RSVP choices -->
   <div id="popupRsvp" class="map-popup compact" style="display:none;">
     <h4 style="margin:0 0 6px;font-family:'Playfair Display',serif;color:#1f1f1f">RSVP</h4>
-    <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih RSVP dan Hantarkan Ucapan.</p>
+    <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih tindakan untuk RSVP atau hantarkan ucapan.</p>
     <a id="openExternalRsvp" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-clipboard-list"></i><span>Isi RSVP</span></a>
     <a id="openUcapan" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-pencil"></i><span>Hantar Ucapan</span></a>
   </div>
@@ -1307,6 +1307,65 @@ h2 {
   addCalPopup && addCalPopup.addEventListener('keydown', function(e){
     if(e.key === 'Escape') hideAddPopup();
   });
+
+})();
+</script>
+
+<!-- =========================
+     ADDED: Popup Exclusive Mode
+     (Pilihan B) — appended only
+     ========================= -->
+<script>
+/* Make popups exclusive: opening one will hide the others
+   This was added without modifying existing code elsewhere. */
+(function(){
+
+  const popupIds = [
+    'mapPopup',
+    'popupRsvp',
+    'popupRsvpIframe',
+    'ucapanForm',
+    'addCalPopup',
+    'contactCard'
+  ];
+
+  const popupEls = popupIds.map(id => document.getElementById(id)).filter(Boolean);
+
+  function hideAllExcept(exceptEl){
+    popupEls.forEach(el=>{
+      if(!el) return;
+      if(el === exceptEl) return;
+      try { el.style.display = 'none'; el.setAttribute('aria-hidden', 'true'); } catch(e){/*ignore*/ }
+    });
+  }
+
+  const mapping = [
+    {btnId: 'mapBtn', elId: 'mapPopup'},
+    {btnId: 'bottomRsvpBtn', elId: 'popupRsvp'},
+    {btnId: 'openExternalRsvp', elId: 'popupRsvpIframe'},
+    {btnId: 'openUcapan', elId: 'ucapanForm'},
+    {btnId: 'addCalBtn', elId: 'addCalPopup'},
+    {btnId: 'callBtn', elId: 'contactCard'}
+  ];
+
+  mapping.forEach(m=>{
+    const btn = document.getElementById(m.btnId);
+    const el = document.getElementById(m.elId);
+    if(!btn || !el) return;
+    btn.addEventListener('click', function(e){
+      // allow original handlers to run, then hide others
+      setTimeout(()=> hideAllExcept(el), 40);
+    });
+  });
+
+  // also observe addCalPopup style changes to close others if opened by other means
+  const addCalPopup = document.getElementById('addCalPopup');
+  if(addCalPopup){
+    const obs = new MutationObserver(()=> {
+      if(addCalPopup.style.display === 'block') hideAllExcept(addCalPopup);
+    });
+    obs.observe(addCalPopup, { attributes:true, attributeFilter:['style','aria-hidden'] });
+  }
 
 })();
 </script>
