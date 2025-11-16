@@ -694,7 +694,7 @@ h2 {
   <!-- popup small for RSVP choices -->
   <div id="popupRsvp" class="map-popup compact" style="display:none;">
     <h4 style="margin:0 0 6px;font-family:'Playfair Display',serif;color:#1f1f1f">RSVP</h4>
-    <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih tindakan untuk RSVP atau hantarkan ucapan.</p>
+    <p style="margin:0 0 10px;font-size:14px;color:#6b5f50">Pilih RSVP dan Hantarkan Ucapan.</p>
     <a id="openExternalRsvp" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-clipboard-list"></i><span>Isi RSVP</span></a>
     <a id="openUcapan" href="#" style="display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;padding:8px;border-radius:8px;margin:6px auto;max-width:200px;gap:8px"><i class="fa-solid fa-pencil"></i><span>Hantar Ucapan</span></a>
   </div>
@@ -811,7 +811,40 @@ h2 {
   const openExternalRsvp = document.getElementById('openExternalRsvp');
   const openUcapanBtn = document.getElementById('openUcapan');
   if(openExternalRsvp) openExternalRsvp.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); popupRsvp.style.display='none'; popupRsvpIframe.style.display = (popupRsvpIframe.style.display==='block')? 'none':'block'; popupRsvpIframe.setAttribute('aria-hidden', popupRsvpIframe.style.display==='none'); const el = document.getElementById('rsvp_nama'); if(el) el.focus(); });
-  if(openUcapanBtn) openUcapanBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); popupRsvp.style.display='none'; ucapanForm.style.display = (ucapanForm.style.display==='block')? 'none':'block'; ucapanForm.setAttribute('aria-hidden', ucapanForm.style.display==='none'); const el = document.getElementById('ucap_name'); if(el) el.focus(); });
+
+  // --- GANTI: openUcapan click handler ---
+  if(openUcapanBtn) openUcapanBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    // hide the small popup selector
+    popupRsvp.style.display = 'none';
+
+    // ensure ucapanForm exists
+    if(!ucapanForm) return;
+
+    // If we're about to show the form -> reset to original state
+    const willShow = ucapanForm.style.display !== 'block';
+    if(willShow){
+      // clear inputs and hide any previous status
+      const nameEl = document.getElementById('ucap_name');
+      const textEl = document.getElementById('ucap_text');
+      const ucapanStatus = document.getElementById('ucapanStatus');
+      if(nameEl) nameEl.value = '';
+      if(textEl) textEl.value = '';
+      if(ucapanStatus) { ucapanStatus.style.display = 'none'; ucapanStatus.textContent = ''; }
+
+      // show form and focus first input
+      ucapanForm.style.display = 'block';
+      ucapanForm.setAttribute('aria-hidden','false');
+      const el = document.getElementById('ucap_name');
+      if(el) el.focus();
+    } else {
+      // toggle off: hide it
+      ucapanForm.style.display = 'none';
+      ucapanForm.setAttribute('aria-hidden','true');
+    }
+  });
 
   // close popup buttons
   const closeRsvpIframe = document.getElementById('closeRsvpIframe');
@@ -948,38 +981,65 @@ h2 {
   const submitUcapan = document.getElementById('submitUcapan');
   const ucapanStatus = document.getElementById('ucapanStatus');
   if(submitUcapan){
+    // --- GANTI: submitUcapan click handler ---
     submitUcapan.addEventListener('click', function(e){
       e.preventDefault();
+
       const nameEl = document.getElementById('ucap_name');
       const textEl = document.getElementById('ucap_text');
+      const ucapanStatusLocal = document.getElementById('ucapanStatus');
       const name = nameEl ? nameEl.value.trim() : '';
       const text = textEl ? textEl.value.trim() : '';
-      if(!name || !text){ showStatus(ucapanStatus, 'Sila isi nama dan ucapan.', false); return; }
 
-      // optimistic bubble (insert at top)
+      if(!name || !text){
+        showStatus(ucapanStatusLocal, 'Sila isi nama dan ucapan.', false);
+        return;
+      }
+
+      // optimistic bubble (use correct variables)
       try {
         const tsNow = new Date().toISOString();
         const container = document.getElementById('bubblesContainer');
-        const bubble = document.createElement('div'); bubble.className = 'bubble';
-        bubble.innerHTML ='<div class="meta">'+ escapeHtml(nama) +'</div>' +'<div class="msg">'+ escapeHtml(ucapan) +'</div>';
-
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        // meta then msg (we render name and message as entered)
+        bubble.innerHTML = '<div class="meta">' + escapeHtml(name) + '</div>' + '<div class="msg">' + escapeHtml(text) + '</div>';
         if(container) container.insertBefore(bubble, container.firstChild);
         setTimeout(()=>{ try{ container.scrollTo({ top: 0, behavior:'smooth' }); }catch(e){} }, 40);
-      } catch(e){ console.warn(e); }
+      } catch(err){ console.warn('optimistic bubble error', err); }
 
+      // show success status immediately so user sees it
+      showStatus(ucapanStatusLocal, 'Ucapan dihantar dan disimpan.', true);
+
+      // Prepare payload and send
       const payload = { nama: name, ucapan: text, timestamp: new Date().toISOString(), type: 'ucapan' };
       postFormNoCORS(UCAPAN_WS_URL, payload, function(ok){
         if(ok){
-          showStatus(ucapanStatus, 'Ucapan dihantar dan disimpan.', true);
+          // keep success message (already shown) and refresh list shortly after
           setTimeout(loadUcapan_JSONP_thenRender, 350);
         } else {
-          showStatus(ucapanStatus, 'Ucapan dipaparkan tetapi tidak dapat disahkan oleh server.', false);
+          // indicate server couldn't verify
+          showStatus(ucapanStatusLocal, 'Ucapan dipaparkan tetapi tidak dapat disahkan oleh server.', false);
         }
       });
 
-      if(nameEl) nameEl.value='';
-      if(textEl) textEl.value='';
-      if(ucapanForm) ucapanForm.style.display='none';
+      // WAIT 500ms to allow user to see the success message,
+      // then reset form inputs and hide the ucapan form (return to original)
+      setTimeout(function(){
+        try {
+          if(nameEl) nameEl.value = '';
+          if(textEl) textEl.value = '';
+          if(ucapanForm){
+            ucapanForm.style.display = 'none';
+            ucapanForm.setAttribute('aria-hidden','true');
+          }
+          // hide the tiny status after we hid the form to keep UI tidy
+          if(ucapanStatusLocal){
+            // keep it visible a tiny bit longer for feedback, then hide
+            setTimeout(()=>{ ucapanStatusLocal.style.display = 'none'; ucapanStatusLocal.textContent = ''; }, 60);
+          }
+        } catch(e){ console.warn('post-send cleanup error', e); }
+      }, 500); // 1/2 second delay
     });
   }
 
