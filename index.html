@@ -596,6 +596,15 @@ body.opening-opened .opening-seal { transform: scale(0.6); opacity:0; }
       z-index: 10080;
     }
 
+    /* === Anti Zoom for mobile (iPhone/Android) === */
+#popupRsvpIframe input,
+#popupRsvpIframe textarea,
+#ucapanForm input,
+#ucapanForm textarea {
+  font-size: 16px !important;   /* iPhone tidak zoom bila input focus */
+}
+
+
     @media (max-width: 360px){
       .map-popup.compact { max-width: 300px; padding:10px; bottom:100px; }
       .bottom-bar { padding:6px 10px; }
